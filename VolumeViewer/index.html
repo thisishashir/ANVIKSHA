@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="./static/bootstrap.min.css">
+    <link rel="stylesheet" href="./static/iconfont.css">
+    <link rel="stylesheet" href="./static/nouislider.min.css">
+    <link rel="stylesheet" href="./static/custom.css">
+    <script src="./static/plotly-latest.min.js"></script>
+    <script src="./static/plotly-locale-zh-cn.js"></script>
+    <title>3D View</title>
+  </head>
+  <body>
+    <div class="banner">
+      <h2 class="site-title">Volume Rendering and Analysis of Ocean Forecasts</h2>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-9 left-col">
+          <div class="card figure-card">
+            <!-- <div class="card-header">
+              3D Data Visualization
+            </div> -->
+            <div class="card-body draw-area">
+              <div id="drawBox"></div>
+              <div id="loading"><p>Rendering</p><p>Please wait...</p></div>
+              <div id="draw-tools">
+                <span class="iconfont icon-jingdu" title="Select longitude cross-section (X)" onclick="cut_select('x')"></span>
+                <span class="iconfont icon-weidu" title="Select latitude cross-section (Y)" onclick="cut_select('y')"></span>
+                <span class="iconfont icon-gaodu" title="Select depth cross-section (Z)" onclick="cut_select('z')"></span>
+                <span class="iconfont icon-weibiaoti1-copy" title="Select directional angle cross-section (A)" onclick="cut_select('a')"></span>
+                <span class="iconfont icon-quxiao" title="Cancel selection tool" onclick="clc_select()"></span>
+                <span class="iconfont icon-qingkong" title="Clear cross-section selection" onclick="empty_select()"></span>
+
+                <span class="iconfont icon-jm" title="View selected cross-section" onclick="view_select()"></span>
+                <span class="iconfont icon-Dwuti" title="Restore volume visualization" onclick="reset_select()"></span>
+              </div>
+              <div id="opacity-slider-tool">
+                <div id="slider-opacity" title="Adjust transparency"></div>
+              </div>
+            </div>
+            <div id="slider-temp" class="slider"></div>
+            <div id="slider-salinity" class="slider"></div>
+            <div id="slider-current" class="slider"></div>
+            <div id="slider-vcurrent" class="slider"></div>
+            <!-- <div id="slider-sonar" class="slider"></div> -->
+            <!-- <div id="slider-dem" class="slider"></div> -->
+          </div>
+        </div>
+        <div class="col-md-3 right-col">
+          <div class="card controls-card">
+            <div class="card-header">
+              <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                <li class="nav-item">
+                  <a class="nav-link active" id="temp-tab" data-toggle="tab" href="#temp" role="tab" aria-controls="temp" aria-selected="true">Temperature</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="salinity-tab" data-toggle="tab" href="#salinity" role="tab" aria-controls="salinity" aria-selected="false">Salinity</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="current-tab" data-toggle="tab" href="#current" role="tab" aria-controls="current" aria-selected="false">Current</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="both-tab" data-toggle="tab" href="#both" role="tab" aria-controls="both" aria-selected="false">Overlie</a>
+                </li>
+              </ul>
+            </div>
+            <div class="tab-content" id="myTabContent">
+              <div class="card-body tab-pane fade show active" id="temp" role="tabpanel" aria-labelledby="temp-tab">
+                <div class="form-group">
+                  <label for="select-time">Date:</label>
+                  <select class="form-control date-select-options tsc-select-options" id="temp-selected-date">
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="temp-start-pre-time">Start Time:</label>
+                  <select class="form-control start-pre-time" id="temp-start-pre-time">
+                    <option value="0">00:00</option>
+                    <option value="6">06:00</option>
+                    <option value="12">12:00</option>
+                    <option value="18">18:00</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="select-time">Time Steps:</label>
+                  <select class="form-control ts-select-options" id="temp-selected-time">
+                  </select>
+                </div>
+                <div class="form-group">
+                  <button onclick="load_ts_model('temp')" class="btn btn-info w-100" id="temp-model-btn" data-toggle="popover" data-placement="top" data-content="Please select forecast time" data-trigger="manual">Loading Data</button>
+                </div>
+                <!-- <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="temp-checkboxX">
+                  <label class="form-check-label" for="temp-checkboxX">Longitudinal Sections</label>
+                </div> -->
+                <div class="form-group">
+                  <label for="temp-selectedX">Longitudinal Sections:</label>
+                  <select multiple class="form-control" id="temp-selectedX">
+                  </select>
+                </div>
+                <!-- <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="temp-checkboxY">
+                  <label class="form-check-label" for="temp-checkboxY">Longitudinal Sections:</label>
+                </div> -->
+                <div class="form-group">
+                  <label for="temp-selectedY">Latitudinal Sections:</label>
+                  <select multiple class="form-control" id="temp-selectedY">
+                  </select>
+                </div>
+                <!-- <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="temp-checkboxZ">
+                  <label class="form-check-label" for="temp-checkboxZ">Horizontal Sections:</label>
+                </div> -->
+                <div class="form-group">
+                  <label for="temp-selectedZ">Horizontal Sections:</label>
+                  <select multiple class="form-control" id="temp-selectedZ">
+                  </select>
+                </div>
+                <div class="form-group form-check">
+                  <input type="checkbox" class="form-check-input data-show-terrain" id="show-terrain-intemp" name="terrain">
+                  <label class="form-check-label" for="show-terrain-intemp">Show Seabed Topography</label>
+                </div>
+                <!-- <div class="form-group">
+                  <button onclick="draw_tsPM('temp')" class="btn btn-primary">View Temperature Cross-section</button>
+                </div>
+                <div class="form-group">
+                  <button onclick="clear_selectedPM('temp')" class="btn btn-primary">Clear Cross-section Selection</button>
+                </div>
+                <div class="form-group">
+                  <button onclick="reset_ts('temp')" class="btn btn-primary">Restore Volume Visualization</button>
+                </div> -->
+              </div><!-- end of temp card -->
+              <div class="card-body tab-pane fade" id="salinity" role="tabpanel" aria-labelledby="salinity-tab">
+                <div class="form-group">
+                  <label for="select-time">Date:</label>
+                  <select class="form-control date-select-options tsc-select-options" id="salinity-selected-date">
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="salinity-start-pre-time">Start Time:</label>
+                  <select class="form-control start-pre-time" id="salinity-start-pre-time">
+                    <option value="0">00:00</option>
+                    <option value="6">06:00</option>
+                    <option value="12">12:00</option>
+                    <option value="18">18:00</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="select-time">Time Steps:</label>
+                  <select class="form-control ts-select-options" id="salinity-selected-time">
+                  </select>
+                </div>
+                <div class="form-group">
+                  <button onclick="load_ts_model('salinity')" class="btn btn-info w-100" id="salinity-model-btn" data-toggle="popover" data-placement="top" data-content="Please select forecast time" data-trigger="manual">Loading Data</button>
+                </div>
+                <!-- <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="salinity-checkboxX">
+                  <label class="form-check-label" for="salinity-checkboxX">Longitudinal Sections:</label>
+                </div> -->
+                <div class="form-group">
+                  <label for="salinity-selectedX">Longitudinal Sections:</label>
+                  <select multiple class="form-control" id="salinity-selectedX">
+                  </select>
+                </div>
+                <!-- <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="salinity-checkboxY">
+                  <label class="form-check-label" for="salinity-checkboxY">Latitudinal Sections:</label>
+                </div> -->
+                <div class="form-group">
+                  <label for="salinity-selectedY">Latitudinal Sections:</label>
+                  <select multiple class="form-control" id="salinity-selectedY">
+                  </select>
+                </div>
+                <!-- <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="salinity-checkboxZ">
+                  <label class="form-check-label" for="salinity-checkboxZ">Horizontal Sections</label>
+                </div> -->
+                <div class="form-group">
+                  <label for="salinity-selectedZ">Horizontal Sections:</label>
+                  <select multiple class="form-control" id="salinity-selectedZ">
+                  </select>
+
+                </div>
+                <div class="form-group form-check">
+                  <input type="checkbox" class="form-check-input data-show-terrain" id="show-terrain-insalinity" name="terrain">
+                  <label class="form-check-label" for="show-terrain-insalinity">Show Seabed Topography</label>
+                </div>
+                <!-- <div class="form-group">
+                  <button onclick="draw_tsPM('salinity')" class="btn btn-primary">View Salinity Cross-section</button>
+                </div>
+                <div class="form-group">
+                  <button onclick="clear_selectedPM('salinity')" class="btn btn-primary">Clear Cross-section Selection</button>
+                </div>
+                <div class="form-group">
+                  <button onclick="reset_ts('salinity')" class="btn btn-primary">Restore Volume Visualization</button>
+                </div> -->
+              </div><!-- end of salinity card -->
+              <div class="card-body tab-pane fade" id="current" role="tabpanel" aria-labelledby="current-tab">
+                <div class="form-group">
+                  <label for="select-time">Date:</label>
+                  <select class="form-control date-select-options tsc-select-options" id="current-selected-date">
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="current-start-pre-time">Start Time:</label>
+                  <select class="form-control start-pre-time" id="current-start-pre-time">
+                    <option value="0">00:00</option>
+                    <option value="6">06:00</option>
+                    <option value="12">12:00</option>
+                    <option value="18">18:00</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="select-time">Time Steps:</label>
+                  <select class="form-control" id="current-selected-time">
+                  </select>
+                </div>
+                <div class="form-group">
+                  <button onclick="load_current_model()" class="btn btn-info w-100" id="current-model-btn" data-toggle="popover" data-placement="top" data-content="Please select forecast time" data-trigger="manual">Loading Data</button>
+                </div>
+                <!-- <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="current-checkboxX">
+                  <label class="form-check-label" for="current-checkboxX">Longitudinal Sections:</label>
+                </div> -->
+                <div class="form-group">
+                  <label for="current-selectedX">Longitudinal Sections(V):</label>
+                  <select multiple class="form-control" id="current-selectedX">
+                  </select>
+                </div>
+                <!-- <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="current-checkboxY">
+                  <label class="form-check-label" for="current-checkboxY">Latitudinal Sections:</label>
+                </div> -->
+                <div class="form-group">
+                  <label for="current-selectedY">Latitudinal Sections(V):</label>
+                  <select multiple class="form-control" id="current-selectedY">
+                  </select>
+ 
+                </div>
+                <!-- <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="current-checkboxZ">
+                  <label class="form-check-label" for="current-checkboxZ">Horizontal Sections:</label>
+                </div> -->
+                <div class="form-group">
+                  <label for="current-selectedZ">Horizontal Sections(U+V):</label>
+                  <select multiple class="form-control" id="current-selectedZ">
+                  </select>
+                </div>
+                <div class="form-group form-check">
+                  <input type="checkbox" class="form-check-input data-show-current-zd" id="show-current-zd" name="current-zd">
+                  <label class="form-check-label" for="show-current-zd">Show Vectors</label>
+                  <span id="slider-vcurrent-size" title="Adjust current vector arrow size, default 0.06"></span>
+                </div>
+                <div class="form-group form-check">
+                  <input type="checkbox" class="form-check-input data-show-terrain" id="show-terrain-incurrent" name="terrain">
+                  <label class="form-check-label" for="show-terrain-incurrent">Show Seabed Topography</label>
+                </div>
+                <!-- <div class="form-group">
+                  <button onclick="draw_tsPM('current')" class="btn btn-primary">View Salinity Cross-section</button>
+                </div>
+                <div class="form-group">
+                  <button onclick="clear_selectedPM('current')" class="btn btn-primary">Clear Cross-section Selection</button>
+                </div>
+                <div class="form-group">
+                  <button onclick="reset_ts('current')" class="btn btn-primary">Restore Volume Visualization</button>
+                </div> -->
+              </div><!-- end of current card -->
+              <div class="card-body tab-pane fade" id="sonar" role="tabpanel" aria-labelledby="sonar-tab">
+                <div class="form-group">
+                  <label for="select-time">Date:</label>
+                  <select class="form-control date-select-options sonar-select-options" id="sonar-selected-date">
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="sonar-start-pre-time">Start Time:</label>
+                  <select class="form-control start-pre-time" id="sonar-start-pre-time">
+                    <option value="0">00:00</option>
+                    <option value="6">06:00</option>
+                    <option value="12">12:00</option>
+                    <option value="18">18:00</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="select-time">Data Selection:</label>
+                  <select class="form-control" id="sonar-selected-time">
+                  </select>
+                </div>
+                <div class="form-group">
+                  <button onclick="load_sonar_model()" class="btn btn-info w-100" id="sonar-model-btn" data-toggle="popover" data-placement="top" data-content="Please select forecast time" data-trigger="manual">Load Acoustic Field Data</button>
+                </div>
+                <!-- <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="sonar-angle">
+                  <label class="form-check-label" for="sonar-angle">Directional Angle Cross-section</label>
+                </div>
+                <div class="form-group">
+                  <select class="form-control" id="sonar-selectedA">
+                  </select>
+                  <small class="form-text text-muted">Select the directional angle cross-section to display</small>
+                </div>
+                <div class="form-group form-check check-label">
+                  <input type="checkbox" class="form-check-input" id="sonar-depth">
+                  <label class="form-check-label" for="sonar-depth">Depth Cross-section</label>
+                </div>
+                <div class="form-group">
+                  <select class="form-control" id="sonar-selectedZ">
+                  </select>
+                  <small class="form-text text-muted">Select the depth cross-section to display</small>
+                </div> -->
+                <div class="form-group">
+                  <label for="sonar-selectedA">Directional Angle Cross-section:</label>
+                  <select multiple class="form-control" id="sonar-selectedA">
+                  </select>
+                  <small class="form-text text-muted">Use the cross-section selection tool in the top-left corner to select the directional angle cross-section to display</small>
+                </div>
+                <div class="form-group">
+                  <label for="sonar-selectedZ">Depth Cross-section:</label>
+                  <select multiple class="form-control" id="sonar-selectedZ">
+                  </select>
+                  <small class="form-text text-muted">Use the cross-section selection tool in the top-left corner to select the depth cross-section to display</small>
+                </div>
+                <div class="form-group">
+                  <label for="slider-resize-sonar">Adjust Particle Size:</label>
+                  <div id="slider-resize-sonar" title="Particle size, default 12.0"></div>
+                </div>
+                <div class="form-group form-check">
+                  <input type="checkbox" class="form-check-input data-show-terrain" id="show-terrain-insonar" name="terrain">
+                  <label class="form-check-label" for="show-terrain-insonar">Show Seabed Topography</label>
+                </div>
+                <!-- <div class="form-group">
+                  <button onclick="draw_sonar_scatter_PM()" class="btn btn-primary">View Acoustic Field Cross-section</button>
+                  <div id="slider-resize-sonar" title="Adjust particle size, default 4.0"></div>
+                </div> -->
+                <!-- <div class="form-group">
+                  <button onclick="clear_selected_sonarPM()" class="btn btn-primary">Clear Cross-section Selection</button>
+                </div> -->
+                <!-- <div class="form-group">
+                  <button onclick="reset_sonar()" class="btn btn-primary">Restore Volume Visualization</button>
+                </div> -->
+              </div><!-- end of sonar card -->
+              <div class="card-body tab-pane fade" id="both" role="tabpanel" aria-labelledby="both-tab">
+                <div class="form-group">
+                  <p>Options：</p>
+                </div>
+                <div class="form-group form-check">
+                  <input type="checkbox" class="form-check-input data-show-terrain" id="show-terrain" name="terrain">
+                  <label class="form-check-label" for="show-terrain">Show Seabed Topography</label>
+                </div>
+                <div class="form-group form-check">
+                  <input type="checkbox" class="form-check-input data-show-control" id="show-temp" name="temp">
+                  <label class="form-check-label" for="show-temp">Show Temperature</label>
+                </div>
+                <div class="form-group form-check">
+                  <input type="checkbox" class="form-check-input data-show-control" id="show-salinity" name="salinity">
+                  <label class="form-check-label" for="show-salinity">Show Salinity</label>
+                </div>
+                <div class="form-group form-check">
+                  <input type="checkbox" class="form-check-input data-show-control" id="show-current" name="current">
+                  <label class="form-check-label" for="show-current">Show Currents</label>
+                </div>
+                <div class="form-group">
+                  <br>
+                </div>
+              </div><!-- end of both card -->
+            </div><!-- end of tabcontent -->
+          </div><!-- end of controls card -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="./static/jquery-3.4.1.min.js"></script>
+    <script src="./static/popper.min.js"></script>
+    <script src="./static/bootstrap.min.js"></script>
+    <script src="./static/nouislider.min.js"></script>
+    <script src="./static/wNumb.js"></script>
+    <script src="./static/proj4.js"></script>
+    <script src="./static/control.js"></script>
+  </body>
+</html>
